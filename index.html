@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat with Local LLM</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --bot-bg: #f0f2f5;
+      --user-bg: #0078d4;
+      --chat-bg: #ffffff;
+      --border-color: #d1d5da;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #e5eaf1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 600px;
+      background: var(--chat-bg);
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background-color: var(--user-bg);
+      color: white;
+      padding: 16px;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      background: #f7f9fc;
+    }
+
+    .message {
+      margin-bottom: 16px;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    .message.user {
+      text-align: right;
+    }
+
+    .message.user .bubble {
+      background-color: var(--user-bg);
+      color: white;
+      border-radius: 18px 18px 0 18px;
+      display: inline-block;
+      padding: 10px 14px;
+      max-width: 80%;
+    }
+
+    .message.bot .bubble {
+      background-color: var(--bot-bg);
+      color: #333;
+      border-radius: 18px 18px 18px 0;
+      display: inline-block;
+      padding: 10px 14px;
+      max-width: 80%;
+    }
+
+    .chat-input {
+      display: flex;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 14px;
+      font-size: 1rem;
+      border: none;
+      outline: none;
+    }
+
+    .chat-input button {
+      background-color: var(--user-bg);
+      color: white;
+      border: none;
+      padding: 0 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .chat-input button:hover {
+      background-color: #005a9e;
+    }
+
+    code {
+      background: #f4f4f4;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+
+    pre {
+      background: #f4f4f4;
+      padding: 12px;
+      overflow-x: auto;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="chat-container">
+  <div class="chat-header">💬 Chat with Local LLM (Mitral)</div>
+  <div class="chat-messages" id="chat"></div>
+  <div class="chat-input">
+    <input type="text" id="message" placeholder="Type your message..." onkeydown="handleKey(event)" />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<script>
+  const chatBox = document.getElementById("chat");
+  const input = document.getElementById("message");
+
+  function appendMessage(text, sender = "bot", isMarkdown = false) {
+    const msgDiv = document.createElement("div");
+    msgDiv.className = "message " + sender;
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.innerHTML = isMarkdown ? marked.parse(text) : text;
+
+    msgDiv.appendChild(bubble);
+    chatBox.appendChild(msgDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  async function sendMessage() {
+  const message = input.value.trim();
+  if (!message) return;
+
+  // Show user's message
+  appendMessage(message, "user", false);
+  input.value = "";
+  input.focus();
+
+  // Create a bot message bubble placeholder
+  const botDiv = document.createElement("div");
+  botDiv.className = "message bot";
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.innerHTML = "";
+  botDiv.appendChild(bubble);
+  chatBox.appendChild(botDiv);
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  try {
+    const response = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+
+    let fullText = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      fullText += chunk;
+      bubble.innerHTML = marked.parse(fullText);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+  } catch (err) {
+    bubble.innerHTML = "❌ Error: " + err.message;
+  }
+}
+
+  function handleKey(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      sendMessage();
+    }
+  }
+</script>
+
+</body>
+</html>
