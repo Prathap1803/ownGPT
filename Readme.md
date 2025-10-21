@@ -37,7 +37,7 @@ A minimal, full-stack chat application that connects a **FastAPI backend** to a 
 1.Clone the repository:
 
 ```
-git clone https://github.com/yourusername/local-llm-chat.git
+git clone https://github.com/Prathap1803/ownGPT.git
 cd local-llm-chat
 ```
 
