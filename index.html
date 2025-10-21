@@ -85,6 +85,18 @@
     .chat-input {
       display: flex;
       border-top: 1px solid var(--border-color);
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+    }
+
+    #modelSelect {
+      padding: 8px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: white;
+      min-width: 180px;
     }
 
     .chat-input input {
@@ -93,6 +105,8 @@
       font-size: 1rem;
       border: none;
       outline: none;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
     }
 
     .chat-input button {
@@ -102,6 +116,7 @@
       padding: 0 20px;
       font-size: 1rem;
       cursor: pointer;
+      border-radius: 6px;
       transition: background-color 0.2s ease;
     }
 
@@ -127,10 +142,13 @@
 <body>
 
 <div class="chat-container">
-  <div class="chat-header">💬 Chat with Local LLM (Mitral)</div>
+  <div class="chat-header">💬 Chat with Local LLM (Mistral)</div>
   <div class="chat-messages" id="chat"></div>
   <div class="chat-input">
-    <input type="text" id="message" placeholder="Type your message..." onkeydown="handleKey(event)" />
+    <select id="modelSelect" title="Select Model">
+      <option>Loading models...</option>
+    </select>
+    <input type="text" id="message" placeholder="Type your message..." onkeydown="handleKey(event)" autocomplete="off" />
     <button onclick="sendMessage()">Send</button>
   </div>
 </div>
@@ -138,7 +156,9 @@
 <script>
   const chatBox = document.getElementById("chat");
   const input = document.getElementById("message");
+  const modelSelect = document.getElementById("modelSelect");
 
+  // Append message to chat box
   function appendMessage(text, sender = "bot", isMarkdown = false) {
     const msgDiv = document.createElement("div");
     msgDiv.className = "message " + sender;
@@ -150,60 +170,103 @@
     msgDiv.appendChild(bubble);
     chatBox.appendChild(msgDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Save chat history in localStorage
+    localStorage.setItem("chatHistory", chatBox.innerHTML);
   }
 
-  async function sendMessage() {
-  const message = input.value.trim();
-  if (!message) return;
+  // Load models dynamically from backend
+  async function loadModels() {
+    modelSelect.disabled = true;
+    modelSelect.innerHTML = '<option>Loading models...</option>';
 
-  // Show user's message
-  appendMessage(message, "user", false);
-  input.value = "";
-  input.focus();
+    try {
+      const res = await fetch("/models");
+      const data = await res.json();
+      const models = data.models || [];
 
-  // Create a bot message bubble placeholder
-  const botDiv = document.createElement("div");
-  botDiv.className = "message bot";
-  const bubble = document.createElement("div");
-  bubble.className = "bubble";
-  bubble.innerHTML = "";
-  botDiv.appendChild(bubble);
-  chatBox.appendChild(botDiv);
-  chatBox.scrollTop = chatBox.scrollHeight;
+      modelSelect.innerHTML = ""; // Clear current options
 
-  try {
-    const response = await fetch("/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
-    });
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-
-    let fullText = "";
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value, { stream: true });
-      fullText += chunk;
-      bubble.innerHTML = marked.parse(fullText);
-      chatBox.scrollTop = chatBox.scrollHeight;
+      if (models.length === 0) {
+        modelSelect.innerHTML = '<option>No models found</option>';
+      } else {
+        models.forEach(model => {
+          const opt = document.createElement("option");
+          opt.value = model;
+          opt.textContent = model;
+          modelSelect.appendChild(opt);
+        });
+      }
+    } catch (err) {
+      console.error("Error loading models:", err);
+      modelSelect.innerHTML = '<option>Error loading models</option>';
+    } finally {
+      modelSelect.disabled = false;
     }
-
-  } catch (err) {
-    bubble.innerHTML = "❌ Error: " + err.message;
   }
-}
 
+  // Send message with selected model
+  async function sendMessage() {
+    const message = input.value.trim();
+    if (!message) return;
+
+    // Show user's message
+    appendMessage(message, "user", false);
+    input.value = "";
+    input.focus();
+
+    // Create a bot message bubble placeholder
+    const botDiv = document.createElement("div");
+    botDiv.className = "message bot";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.innerHTML = "";
+    botDiv.appendChild(bubble);
+    chatBox.appendChild(botDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    const selectedModel = modelSelect.value || "dolphin-mistral:latest";
+
+    try {
+      const response = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, model: selectedModel }),
+      });
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+
+      let fullText = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        fullText += chunk;
+        bubble.innerHTML = marked.parse(fullText);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+    } catch (err) {
+      bubble.innerHTML = "❌ Error: " + err.message;
+    }
+  }
+
+  // Handle Enter key to send message
   function handleKey(event) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       sendMessage();
     }
   }
+
+  // On page load: load models and chat history
+  window.onload = () => {
+    loadModels();
+    chatBox.innerHTML = localStorage.getItem("chatHistory") || "";
+  };
 </script>
 
 </body>

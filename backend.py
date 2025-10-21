@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
 import requests
 import os
 import json
@@ -25,6 +26,7 @@ def serve_index():
 # Request body schema
 class ChatRequest(BaseModel):
     message: str
+    model: Optional[str] = "dolphin-mistral:latest"
 
 # Chat endpoint: streams response from Ollama to frontend
 @app.post("/chat")
@@ -32,7 +34,7 @@ async def chat(request: ChatRequest):
     def stream_response():
         url = "http://localhost:11434/api/generate/"
         payload = {
-            "model": "dolphin-mistral:latest",
+            "model": request.model,
             "prompt": request.message,
             "stream": True
         }
@@ -52,6 +54,18 @@ async def chat(request: ChatRequest):
             yield f"\n❌ Error: {str(e)}"
 
     return StreamingResponse(stream_response(), media_type="text/plain")
+
+@app.get("/models")
+def list_models():
+    try:
+        response = requests.get("http://localhost:11434/api/tags")
+        response.raise_for_status()
+        data = response.json()
+        models = [model["name"] for model in data.get("models", [])]
+        return {"models": models}
+    except Exception as e:
+        return {"error": str(e), "models": []}
+
 
 
 # Run the server
