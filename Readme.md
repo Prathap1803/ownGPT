@@ -129,11 +129,11 @@ Update this to your frontend's domain before deploying to production.
 ✅ To-Do (Suggestions)
 
 
- [] Add model selection in UI
+ [ ] Add model selection in UI
 
- [] Add chat history
+ [ ] Add chat history
 
- [] Add file upload (for context)
+ [ ] Add file upload (for context)
 
- [] Dockerize the app
+ [ ] Dockerize the app
  
