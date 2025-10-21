@@ -36,8 +36,8 @@ A minimal, full-stack chat application that connects a **FastAPI backend** to a 
 
 1.Clone the repository:
 
-```git clone https://github.com/yourusername/local-llm-chat.git
-cd local-llm-chat```
+``` git clone https://github.com/yourusername/local-llm-chat.git
+cd local-llm-chat ```
 
 
 2.Set up a virtual environment (optional):
