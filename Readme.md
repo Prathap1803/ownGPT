@@ -36,14 +36,14 @@ A minimal, full-stack chat application that connects a **FastAPI backend** to a 
 
 1.Clone the repository:
 
-``` git clone https://github.com/yourusername/local-llm-chat.git
-cd local-llm-chat ```
+``` git clone https://github.com/yourusername/local-llm-chat.git ```
+``` cd local-llm-chat ```
 
 
 2.Set up a virtual environment (optional):
 
-```python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate```
+```python -m venv venv ```
+```source venv/bin/activate  # On Windows: venv\Scripts\activate```
 
 
 3.Install dependencies:
