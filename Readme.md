@@ -129,7 +129,7 @@ Update this to your frontend's domain before deploying to production.
 ✅ To-Do (Suggestions)
 
 
- - [ ] Add model selection in UI
+ - [x] Add model selection in UI
 
  - [ ] Add chat history
 
