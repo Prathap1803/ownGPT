@@ -36,35 +36,47 @@ A minimal, full-stack chat application that connects a **FastAPI backend** to a 
 
 1.Clone the repository:
 
-``` git clone https://github.com/yourusername/local-llm-chat.git ```
-``` cd local-llm-chat ```
+```
+git clone https://github.com/yourusername/local-llm-chat.git
+cd local-llm-chat
+```
 
 
 2.Set up a virtual environment (optional):
 
-```python -m venv venv ```
-```source venv/bin/activate  # On Windows: venv\Scripts\activate```
+```
+python -m venv venv 
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
 
 3.Install dependencies:
 
-```pip install -r requirements.txt```
+```
+pip install -r requirements.txt
+```
 
 
 4.Start Ollama with the model:
 
-```ollama run dolphin-mistral```
+```
+ollama run dolphin-mistral
+```
 
 # ▶️ Running the Server
 
 Start the FastAPI server with:
 
-```uvicorn backend:app --reload```
+```
+uvicorn backend:app --reload
+```
 
 
 Then open your browser and visit:
 
-```http://127.0.0.1:8000```
+```
+http://127.0.0.1:8000
+```
 
 
 This will load the local HTML-based chat interface.
@@ -105,7 +117,9 @@ A streaming plain text response from the local model.
 
 CORS is enabled for all origins during development:
 
-```allow_origins=["*"]```
+```
+allow_origins=["*"]
+```
 
 
 Update this to your frontend's domain before deploying to production.
